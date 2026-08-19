@@ -193,6 +193,30 @@ button, input, select {
   margin-bottom: 24px;
 }
 
+.language-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+}
+
+.language-btn {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.language-btn.active {
+  color: white;
+  background: rgba(108, 168, 255, 0.3);
+}
+
 .section-intro {
   display: flex;
   align-items: center;
@@ -373,6 +397,23 @@ button, input, select {
   font-weight: 800;
 }
 
+.field-group label small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.field-group input[readonly] {
+  background: rgba(29, 78, 216, 0.05);
+  color: var(--primary);
+  cursor: not-allowed;
+}
+
+.field-hint {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
 .field-group input,
 .field-group select {
   width: 100%;
@@ -549,6 +590,12 @@ button, input, select {
 
   .main-panel {
     padding: 20px 16px 28px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1350px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 

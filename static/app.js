@@ -1,12 +1,39 @@
-const FEATURE_DESCRIPTIONS = {
-  person_income: { name: 'הכנסה שנתית', description: 'סך ההכנסה השנתית של מבקש ההלוואה.', icon: '₪' },
-  person_emp_exp: { name: 'שנות ניסיון', description: 'מספר שנות הניסיון התעסוקתי.', icon: '◷' },
-  loan_amnt: { name: 'סכום ההלוואה', description: 'הסכום המבוקש במסגרת ההלוואה.', icon: '▣' },
-  loan_int_rate: { name: 'שיעור הריבית', description: 'שיעור הריבית השנתית על ההלוואה.', icon: '%' },
-  loan_percent_income: { name: 'יחס ההחזר להכנסה', description: 'החלק מההכנסה שמוקדש להחזר ההלוואה.', icon: '◔' },
-  credit_score: { name: 'ציון אשראי', description: 'ציון המשקף את היסטוריית האשראי.', icon: '★' },
-  previous_loan_defaults_on_file_Yes: { name: 'פיגור בהלוואה קודמת', description: 'האם נרשם פיגור בתשלום הלוואה בעבר.', icon: '!' },
+const TEXT = {
+  he: {
+    pageTitle: 'מקרא פרדיקשיין | חיזוי הלוואות', modelLegend: 'מקרא המודל', loanPrediction: 'חיזוי הלוואה', sidebarNote: 'המערכת נעזרת במודל למידת מכונה כדי להעריך את סיכויי אישור ההלוואה.',
+    overview: 'תמונת מצב', modelIntro: 'פרטי המודל והגורמים המשמשים לחיזוי אישור ההלוואה.', predictionFactors: 'גורמים בחיזוי ההלוואה', formIntro: 'הזינו את פרטי הבקשה לקבלת הערכת אישור.',
+    resetForm: 'ניקוי הטופס', annualIncome: 'הכנסה שנתית', yearsExperience: 'שנות ניסיון', loanAmount: 'סכום ההלוואה', interestRate: 'שיעור הריבית', loanIncomeRatio: 'יחס הלוואה להכנסה',
+    automaticallyCalculated: '(מחושב אוטומטית)', ratioHint: 'סכום ההלוואה ÷ הכנסה שנתית', creditScore: 'ציון אשראי', previousDefault: 'פיגור בהלוואה קודמת', chooseOption: 'בחרו אפשרות', yes: 'כן', no: 'לא',
+    incomePlaceholder: 'לדוגמה: 85000', experiencePlaceholder: 'לדוגמה: 5', loanPlaceholder: 'לדוגמה: 35000', ratePlaceholder: 'לדוגמה: 12.5', ratioPlaceholder: 'יחושב לאחר הזנת הכנסה וסכום הלוואה', creditPlaceholder: 'לדוגמה: 620',
+    active: '● מערכת פעילה', unavailable: '● המערכת אינה זמינה', modelName: 'שם המודל', modelNameValue: 'מודל לחיזוי אישור הלוואות', modelNameDescription: 'מודל חיזוי להערכת אישור בקשות',
+    accuracy: 'דיוק המודל', accuracyDescription: 'דיוק על נתוני האימון', sampleCount: 'מספר דוגמאות', sampleDescription: 'בקשות הלוואה בנתוני ההדרכה', criteriaCount: 'מספר קריטריונים', criteriaDescription: 'גורמים המשפיעים על החלטת האישור',
+    modelType: 'סוג המודל', status: 'סטטוס', ready: 'פעיל', readyDescription: 'המודל מוכן לחיזוי', validValue: 'יש להזין ערך תקין.', validNumber: 'יש להזין מספר תקין.',
+    atLeast: 'הערך חייב להיות לפחות', atMost: 'הערך יכול להיות לכל היותר', cannotComplete: 'לא ניתן להשלים את החיזוי', error: 'שגיאה', fixFields: 'יש לתקן את השדות המסומנים לפני הפעלת החיזוי.',
+    calculating: 'מחשב חיזוי...', runPrediction: '✦ הפעלת חיזוי הלוואה', serverError: 'השרת החזיר שגיאה.', approvedTitle: 'ההלוואה צפויה להיות מאושרת', rejectedTitle: 'ההלוואה אינה צפויה להיות מאושרת',
+    approved: 'מאושר', rejected: 'לא אושר', completed: 'החיזוי הושלם בהצלחה.', predictionResult: 'תוצאת החיזוי', approvalChance: 'סיכוי לאישור',
+    feature: { person_income: ['הכנסה שנתית', 'סך ההכנסה השנתית של מבקש ההלוואה.'], person_emp_exp: ['שנות ניסיון', 'מספר שנות הניסיון התעסוקתי.'], loan_amnt: ['סכום ההלוואה', 'הסכום המבוקש במסגרת ההלוואה.'], loan_int_rate: ['שיעור הריבית', 'שיעור הריבית השנתית על ההלוואה.'], loan_percent_income: ['יחס הלוואה להכנסה', 'היחס המחושב בין סכום ההלוואה להכנסה השנתית.'], credit_score: ['ציון אשראי', 'ציון המשקף את היסטוריית האשראי.'], previous_loan_defaults_on_file_Yes: ['פיגור בהלוואה קודמת', 'האם נרשם פיגור בתשלום הלוואה בעבר.'] }
+  },
+  en: {
+    pageTitle: 'Mikra Prediction | Loan Forecast', modelLegend: 'Model Overview', loanPrediction: 'Loan Prediction', sidebarNote: 'The system uses a machine-learning model to estimate the likelihood of loan approval.',
+    overview: 'Overview', modelIntro: 'Model details and the factors used to forecast loan approval.', predictionFactors: 'Loan prediction factors', formIntro: 'Enter the application details to receive an approval estimate.',
+    resetForm: 'Reset form', annualIncome: 'Annual income', yearsExperience: 'Years of experience', loanAmount: 'Loan amount', interestRate: 'Interest rate', loanIncomeRatio: 'Loan-to-income ratio',
+    automaticallyCalculated: '(calculated automatically)', ratioHint: 'Loan amount ÷ annual income', creditScore: 'Credit score', previousDefault: 'Previous loan default', chooseOption: 'Choose an option', yes: 'Yes', no: 'No',
+    incomePlaceholder: 'Example: 85000', experiencePlaceholder: 'Example: 5', loanPlaceholder: 'Example: 35000', ratePlaceholder: 'Example: 12.5', ratioPlaceholder: 'Calculated after entering income and loan amount', creditPlaceholder: 'Example: 620',
+    active: '● System active', unavailable: '● System unavailable', modelName: 'Model name', modelNameValue: 'Loan approval prediction model', modelNameDescription: 'A model for evaluating loan applications',
+    accuracy: 'Model accuracy', accuracyDescription: 'Accuracy on training data', sampleCount: 'Sample count', sampleDescription: 'Loan applications in the training data', criteriaCount: 'Criteria count', criteriaDescription: 'Factors affecting the approval decision',
+    modelType: 'Model type', status: 'Status', ready: 'Active', readyDescription: 'The model is ready for prediction', validValue: 'Enter a valid value.', validNumber: 'Enter a valid number.',
+    atLeast: 'Value must be at least', atMost: 'Value can be at most', cannotComplete: 'Unable to complete the prediction', error: 'Error', fixFields: 'Correct the marked fields before running the prediction.',
+    calculating: 'Calculating prediction...', runPrediction: '✦ Run loan prediction', serverError: 'The server returned an error.', approvedTitle: 'The loan is expected to be approved', rejectedTitle: 'The loan is not expected to be approved',
+    approved: 'Approved', rejected: 'Rejected', completed: 'Prediction completed successfully.', predictionResult: 'Prediction result', approvalChance: 'Approval chance',
+    feature: { person_income: ['Annual income', 'The applicant’s total annual income.'], person_emp_exp: ['Years of experience', 'Number of years of employment experience.'], loan_amnt: ['Loan amount', 'The amount requested in the loan application.'], loan_int_rate: ['Interest rate', 'The annual interest rate for the loan.'], loan_percent_income: ['Loan-to-income ratio', 'The calculated ratio of loan amount to annual income.'], credit_score: ['Credit score', 'A score reflecting the applicant’s credit history.'], previous_loan_defaults_on_file_Yes: ['Previous loan default', 'Whether there was a past loan-payment default.'] }
+  }
 };
+
+const ICONS = { person_income: '₪', person_emp_exp: '◷', loan_amnt: '▣', loan_int_rate: '%', loan_percent_income: '◔', credit_score: '★', previous_loan_defaults_on_file_Yes: '!' };
+let language = localStorage.getItem('loan-language') || 'he';
+let modelInfo = {};
+let features = Object.keys(ICONS);
+const t = (key) => TEXT[language][key] ?? key;
 
 const apiStatus = document.getElementById('api-status');
 const statsGrid = document.getElementById('stats-grid');
@@ -17,108 +44,60 @@ const btnLabel = submitBtn.querySelector('.btn-label');
 const spinner = submitBtn.querySelector('.spinner');
 const resultCard = document.getElementById('result-card');
 const resetBtn = document.getElementById('reset-form');
+const incomeInput = document.getElementById('person_income');
+const loanAmountInput = document.getElementById('loan_amnt');
+const loanIncomeRatioInput = document.getElementById('loan_percent_income');
 const navButtons = document.querySelectorAll('.nav-item');
 const views = { dashboard: document.getElementById('dashboard'), predictor: document.getElementById('predictor') };
 
-function setView(target) {
-  navButtons.forEach((button) => button.classList.toggle('active', button.dataset.target === target));
-  Object.entries(views).forEach(([key, view]) => view.classList.toggle('active', key === target));
-}
-
-function setApiStatus(type, message) {
-  apiStatus.classList.remove('success', 'error');
-  apiStatus.classList.add(type);
-  apiStatus.textContent = message;
-}
+function setView(target) { navButtons.forEach((button) => button.classList.toggle('active', button.dataset.target === target)); Object.entries(views).forEach(([key, view]) => view.classList.toggle('active', key === target)); }
+function setApiStatus(type, message) { apiStatus.className = `status-pill ${type}`; apiStatus.textContent = message; }
+function updateLoanIncomeRatio() { const income = Number(incomeInput.value); const loanAmount = Number(loanAmountInput.value); loanIncomeRatioInput.value = income > 0 && loanAmount > 0 ? (loanAmount / income).toFixed(4) : ''; }
 
 function renderStatCards(data) {
   const cards = [
-    { icon: '◈', label: 'שם המודל', value: 'מודל לחיזוי אישור הלוואות', description: 'מודל חיזוי להערכת אישור בקשות' },
-    { icon: '◌', label: 'דיוק המודל', value: data.accuracy != null ? `${(Number(data.accuracy) * 100).toFixed(1)}%` : '—', description: 'דיוק על נתוני האימון' },
-    { icon: '▦', label: 'מספר דוגמאות', value: data.num_samples ?? '—', description: 'בקשות הלוואה בנתוני ההדרכה' },
-    { icon: '✦', label: 'מספר קריטריונים', value: data.num_features ?? 7, description: 'גורמים המשפיעים על החלטת האישור' },
-    { icon: '⌘', label: 'סוג המודל', value: 'SVM', description: 'Support Vector Machine' },
-    { icon: '●', label: 'סטטוס', value: 'פעיל', description: 'המודל מוכן לחיזוי' },
+    ['◈', 'modelName', t('modelNameValue'), 'modelNameDescription'], ['◌', 'accuracy', data.accuracy != null ? `${(Number(data.accuracy) * 100).toFixed(1)}%` : '—', 'accuracyDescription'],
+    ['▦', 'sampleCount', data.num_samples ?? '—', 'sampleDescription'], ['✦', 'criteriaCount', data.num_features ?? 7, 'criteriaDescription'],
+    ['⌘', 'modelType', 'SVM', 'Support Vector Machine'], ['●', 'status', t('ready'), 'readyDescription'],
   ];
-  statsGrid.innerHTML = cards.map((card) => `<article class="stat-card"><div class="stat-card-top"><span class="stat-icon">${card.icon}</span><span class="stat-label">${card.label}</span></div><div class="stat-value">${card.value}</div><div class="stat-desc">${card.description}</div></article>`).join('');
+  statsGrid.innerHTML = cards.map(([icon, label, value, description]) => `<article class="stat-card"><div class="stat-card-top"><span class="stat-icon">${icon}</span><span class="stat-label">${t(label)}</span></div><div class="stat-value">${value}</div><div class="stat-desc">${t(description)}</div></article>`).join('');
 }
-
-function renderFeatures(features) {
-  featuresList.innerHTML = features.map((key) => {
-    const feature = FEATURE_DESCRIPTIONS[key] || { name: key, description: 'גורם המשמש את המודל בחיזוי.', icon: '•' };
-    return `<article class="feature-item"><span class="feature-icon">${feature.icon}</span><div><div class="feature-name">${feature.name}</div><div class="feature-desc">${feature.description}</div></div></article>`;
-  }).join('');
+function renderFeatures(list) {
+  featuresList.innerHTML = list.map((key) => { const content = TEXT[language].feature[key] || [key, '']; return `<article class="feature-item"><span class="feature-icon">${ICONS[key] || '•'}</span><div><div class="feature-name">${content[0]}</div><div class="feature-desc">${content[1]}</div></div></article>`; }).join('');
+}
+function applyLanguage(nextLanguage) {
+  language = nextLanguage; localStorage.setItem('loan-language', language);
+  document.documentElement.lang = language; document.documentElement.dir = language === 'he' ? 'rtl' : 'ltr'; document.title = t('pageTitle');
+  document.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => { element.placeholder = t(element.dataset.i18nPlaceholder); });
+  document.querySelectorAll('.language-btn').forEach((button) => button.classList.toggle('active', button.dataset.lang === language));
+  btnLabel.textContent = t('runPrediction'); renderStatCards(modelInfo); renderFeatures(features); setApiStatus('success', t('active'));
 }
 
 async function fetchModelInfo() {
-  try {
-    const response = await fetch('/api/model-info');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-    renderStatCards(data);
-    renderFeatures(data.features || []);
-    setApiStatus('success', '● מערכת פעילה');
-  } catch (error) {
-    console.error(error);
-    renderStatCards({});
-    renderFeatures(Object.keys(FEATURE_DESCRIPTIONS));
-    setApiStatus('error', '● המערכת אינה זמינה');
-  }
+  try { const response = await fetch('/api/model-info'); if (!response.ok) throw new Error(); modelInfo = await response.json(); features = modelInfo.features || features; renderStatCards(modelInfo); renderFeatures(features); setApiStatus('success', t('active')); }
+  catch (error) { console.error(error); renderStatCards({}); renderFeatures(features); setApiStatus('error', t('unavailable')); }
 }
-
-function markInvalid(field, message) {
-  field.classList.add('invalid');
-  let error = field.parentElement.querySelector('.field-error');
-  if (!error) { error = document.createElement('div'); error.className = 'field-error'; field.parentElement.appendChild(error); }
-  error.textContent = message;
-}
-function clearInvalid(field) {
-  field.classList.remove('invalid');
-  const error = field.parentElement.querySelector('.field-error');
-  if (error) error.textContent = '';
-}
+function markInvalid(field, message) { field.classList.add('invalid'); let error = field.parentElement.querySelector('.field-error'); if (!error) { error = document.createElement('div'); error.className = 'field-error'; field.parentElement.appendChild(error); } error.textContent = message; }
+function clearInvalid(field) { field.classList.remove('invalid'); const error = field.parentElement.querySelector('.field-error'); if (error) error.textContent = ''; }
 function validateForm() {
-  let valid = true;
-  form.querySelectorAll('input, select').forEach((field) => {
-    const value = field.value.trim();
-    if (value === '') { valid = false; markInvalid(field, 'יש להזין ערך תקין.'); return; }
-    if (field.type === 'number' && Number.isNaN(Number(value))) { valid = false; markInvalid(field, 'יש להזין מספר תקין.'); return; }
-    if (field.min && Number(value) < Number(field.min)) { valid = false; markInvalid(field, `הערך חייב להיות לפחות ${field.min}.`); return; }
-    if (field.max && Number(value) > Number(field.max)) { valid = false; markInvalid(field, `הערך יכול להיות לכל היותר ${field.max}.`); return; }
-    clearInvalid(field);
-  });
-  return valid;
+  let valid = true; form.querySelectorAll('input, select').forEach((field) => { const value = field.value.trim(); if (value === '') { valid = false; markInvalid(field, t('validValue')); return; } if (field.type === 'number' && Number.isNaN(Number(value))) { valid = false; markInvalid(field, t('validNumber')); return; } if (field.min && Number(value) < Number(field.min)) { valid = false; markInvalid(field, `${t('atLeast')} ${field.min}.`); return; } if (field.max && Number(value) > Number(field.max)) { valid = false; markInvalid(field, `${t('atMost')} ${field.max}.`); return; } clearInvalid(field); }); return valid;
 }
-
-function renderErrorState(message) {
-  resultCard.className = 'result-card error';
-  resultCard.innerHTML = `<div class="result-header"><h4>לא ניתן להשלים את החיזוי</h4><span class="badge error">שגיאה</span></div><p>${message}</p>`;
-}
+function renderErrorState(message) { resultCard.className = 'result-card error'; resultCard.innerHTML = `<div class="result-header"><h4>${t('cannotComplete')}</h4><span class="badge error">${t('error')}</span></div><p>${message}</p>`; }
 function renderPredictionResult(data) {
-  const approved = Boolean(data.approved);
-  const probability = data.probability != null ? `<span>סיכוי לאישור</span><strong>${(Number(data.probability) * 100).toFixed(1)}%</strong>` : '';
-  resultCard.className = `result-card ${approved ? 'success' : 'error'}`;
-  resultCard.innerHTML = `<div class="result-header"><h4>${approved ? 'ההלוואה צפויה להיות מאושרת' : 'ההלוואה אינה צפויה להיות מאושרת'}</h4><span class="badge ${approved ? 'success' : 'error'}">${approved ? 'מאושר' : 'לא אושר'}</span></div><p>${data.message || 'החיזוי הושלם בהצלחה.'}</p><div class="result-row"><span>תוצאת החיזוי</span><strong>${data.prediction}</strong>${probability}</div>`;
+  const approved = Boolean(data.approved); const probability = data.probability != null ? `<span>${t('approvalChance')}</span><strong>${(Number(data.probability) * 100).toFixed(1)}%</strong>` : '';
+  resultCard.className = `result-card ${approved ? 'success' : 'error'}`; resultCard.innerHTML = `<div class="result-header"><h4>${approved ? t('approvedTitle') : t('rejectedTitle')}</h4><span class="badge ${approved ? 'success' : 'error'}">${approved ? t('approved') : t('rejected')}</span></div><p>${t('completed')}</p><div class="result-row"><span>${t('predictionResult')}</span><strong>${data.prediction}</strong>${probability}</div>`;
 }
-
 async function submitPrediction(event) {
-  event.preventDefault();
-  if (!validateForm()) { renderErrorState('יש לתקן את השדות המסומנים לפני הפעלת החיזוי.'); return; }
-  const payload = Object.fromEntries(new FormData(form));
-  ['person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'credit_score'].forEach((key) => { payload[key] = Number(payload[key]); });
-  submitBtn.disabled = true; btnLabel.textContent = 'מחשב חיזוי...'; spinner.classList.remove('hidden');
-  try {
-    const response = await fetch('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || data.error || 'השרת החזיר שגיאה.');
-    renderPredictionResult(data);
-  } catch (error) { renderErrorState(error.message || 'אירעה שגיאה במהלך החיזוי.'); }
-  finally { submitBtn.disabled = false; btnLabel.textContent = '✦ הפעלת חיזוי הלוואה'; spinner.classList.add('hidden'); }
+  event.preventDefault(); updateLoanIncomeRatio(); if (!validateForm()) { renderErrorState(t('fixFields')); return; }
+  const payload = Object.fromEntries(new FormData(form)); ['person_income', 'person_emp_exp', 'loan_amnt', 'loan_int_rate', 'loan_percent_income', 'credit_score'].forEach((key) => { payload[key] = Number(payload[key]); });
+  submitBtn.disabled = true; btnLabel.textContent = t('calculating'); spinner.classList.remove('hidden');
+  try { const response = await fetch('/api/predict', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); const data = await response.json(); if (!response.ok) throw new Error(data.detail || data.error || t('serverError')); renderPredictionResult(data); }
+  catch (error) { renderErrorState(error.message || t('serverError')); }
+  finally { submitBtn.disabled = false; btnLabel.textContent = t('runPrediction'); spinner.classList.add('hidden'); }
 }
-
 function resetForm() { form.reset(); resultCard.className = 'result-card hidden'; form.querySelectorAll('input, select').forEach(clearInvalid); }
 navButtons.forEach((button) => button.addEventListener('click', () => setView(button.dataset.target)));
-form.addEventListener('submit', submitPrediction);
-resetBtn.addEventListener('click', resetForm);
-fetchModelInfo();
-setView('dashboard');
+document.querySelectorAll('.language-btn').forEach((button) => button.addEventListener('click', () => applyLanguage(button.dataset.lang)));
+incomeInput.addEventListener('input', updateLoanIncomeRatio); loanAmountInput.addEventListener('input', updateLoanIncomeRatio); form.addEventListener('submit', submitPrediction); resetBtn.addEventListener('click', resetForm);
+applyLanguage(language); fetchModelInfo(); setView('dashboard');

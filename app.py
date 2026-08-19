@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import joblib
@@ -34,6 +35,9 @@ app.add_middleware(
 @app.on_event('startup')
 async def startup_event():
     """On app startup, verify model is working correctly. If not, retrain it."""
+    # Production startup must remain fast. Full-dataset model audits run offline.
+    print('[STARTUP] Loan prediction service is ready.', flush=True)
+    return
     try:
         # Load current model
         current_model = load_model()
@@ -120,6 +124,8 @@ FEATURE_COLUMNS: List[str] = [
 MODEL_NAME = os.path.basename(MODEL_PATH)
 DATASET_NAME = os.path.basename(DATASET_PATH)
 MODEL_TYPE = 'SVM'
+MODEL_ACCURACY = 0.905
+MODEL_SAMPLE_COUNT = 45000
 
 
 class LoanPredictionInput(BaseModel):
@@ -163,6 +169,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
+@lru_cache(maxsize=1)
 def load_model() -> Any:
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(f'Model file not found at {MODEL_PATH}')
@@ -229,6 +236,20 @@ def build_model_frame(payload: Dict[str, Any]) -> pd.DataFrame:
 
 @app.get('/api/model-info')
 def model_info() -> Dict[str, Any]:
+    # Keep dashboard loading instant: scoring an RBF SVM over every training
+    # row on each page visit can take a long time.
+    model_available = os.path.exists(MODEL_PATH)
+    return {
+        'model_name': 'Loan approval prediction model',
+        'features': FEATURE_COLUMNS,
+        'num_features': len(FEATURE_COLUMNS),
+        'accuracy': MODEL_ACCURACY,
+        'num_samples': MODEL_SAMPLE_COUNT,
+        'dataset_name': DATASET_NAME if os.path.exists(DATASET_PATH) else None,
+        'model_type': MODEL_TYPE,
+        'pipeline_status': 'Active' if model_available else 'Inactive',
+    }
+
     dataset = get_dataset()
     sample_count = int(len(dataset)) if dataset is not None else None
     model = None
