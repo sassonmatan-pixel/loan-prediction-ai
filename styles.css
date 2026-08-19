@@ -383,6 +383,11 @@ button, input, select {
   font-size: 0.93rem;
   font-weight: 600;
   color: var(--text);
+  display: flex;
+  align-items: center;
+  min-height: 26px;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .field-group label > span:first-child {
@@ -390,7 +395,7 @@ button, input, select {
   place-items: center;
   width: 22px;
   height: 22px;
-  margin-left: 5px;
+  margin-inline-end: 6px;
   border-radius: 7px;
   background: var(--primary-soft);
   color: var(--primary);
@@ -401,6 +406,7 @@ button, input, select {
   color: var(--muted);
   font-size: 0.75rem;
   font-weight: 500;
+  margin-inline-start: 5px;
 }
 
 .field-group input[readonly] {
