@@ -18,8 +18,8 @@ from sklearn.preprocessing import StandardScaler
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(APP_ROOT, 'static')
-MODEL_PATH = r'C:\Users\Matan\loan_model.pkl'
-DATASET_PATH = r'C:\Users\Matan\loan_data.csv'
+MODEL_PATH = os.path.join(APP_ROOT, 'loan_model.pkl')
+DATASET_PATH = os.path.join(APP_ROOT, 'loan_data.csv')
 
 app = FastAPI(title='Loan Forecast API', version='1.0.0')
 app.add_middleware(
