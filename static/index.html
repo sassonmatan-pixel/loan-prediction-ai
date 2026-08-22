@@ -20,6 +20,7 @@
         <nav class="nav-menu" aria-label="ניווט ראשי">
           <button class="nav-item active" data-target="dashboard"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span><span data-i18n="modelLegend">מקרא המודל</span></button>
           <button class="nav-item" data-target="predictor"><span class="nav-icon"><i data-lucide="calculator"></i></span><span data-i18n="loanPrediction">חיזוי הלוואה</span></button>
+          <button class="nav-item" data-target="analytics"><span class="nav-icon"><i data-lucide="bar-chart-3"></i></span><span data-i18n="performanceAnalytics">ניתוח ביצועים</span></button>
         </nav>
         <div class="language-switch" aria-label="Language selector">
           <button type="button" class="language-btn active" data-lang="he">עברית</button>
@@ -68,9 +69,48 @@
           </div>
           <div id="result-card" class="result-card hidden" aria-live="polite"></div>
         </section>
+        <section id="analytics" class="view">
+          <div class="section-intro"><div class="section-intro-icon"><i data-lucide="bar-chart-3"></i></div><div><h3 data-i18n="performanceAnalytics">ניתוח ביצועים</h3><p data-i18n="analyticsIntro">נתוני ביצועים אמיתיים שחושבו ישירות מהמודל השמור ומדאטה האימון.</p></div></div>
+          <div id="analytics-loading" class="analytics-status"><i data-lucide="loader-2" class="spinner"></i><span data-i18n="analyticsLoading">טוען נתוני ביצועים מהמודל...</span></div>
+          <div id="analytics-error" class="analytics-status error hidden"></div>
+          <div id="analytics-content" class="analytics-grid hidden">
+            <div class="panel analytics-card" id="card-model-details">
+              <div class="panel-header-title"><i data-lucide="cpu"></i><h3 data-i18n="modelDetailsTitle">פרטי המודל</h3></div>
+              <div class="detail-list" id="model-details-list"></div>
+            </div>
+            <div class="panel analytics-card analytics-card-wide" id="card-boundary">
+              <div class="panel-header-title"><i data-lucide="scatter-chart"></i><h3 data-i18n="boundaryTitle">גבול ההחלטה — הטלה דו-ממדית</h3></div>
+              <p class="panel-subtitle" id="boundary-subtitle"></p>
+              <div class="chart-wrap"><canvas id="boundary-canvas"></canvas></div>
+              <div class="chart-legend" id="boundary-legend"></div>
+            </div>
+            <div class="panel analytics-card" id="card-endpoints">
+              <div class="panel-header-title"><i data-lucide="cloud"></i><h3 data-i18n="endpointsTitle">נקודות קצה API</h3></div>
+              <div id="endpoints-list" class="endpoints-list"></div>
+              <a class="secondary-btn analytics-link" id="docs-link" href="/docs" target="_blank" rel="noopener"><i data-lucide="book-open"></i><span data-i18n="viewDocs">תיעוד API</span></a>
+            </div>
+            <div class="panel analytics-card" id="card-model-file">
+              <div class="panel-header-title"><i data-lucide="file-lock-2"></i><h3 data-i18n="modelFileTitle">קובץ המודל</h3></div>
+              <div class="detail-list" id="model-file-list"></div>
+            </div>
+            <div class="panel analytics-card" id="card-confusion">
+              <div class="panel-header-title"><i data-lucide="grid-3x3"></i><h3 data-i18n="confusionTitle">מטריצת בלבול</h3></div>
+              <div id="confusion-table"></div>
+            </div>
+            <div class="panel analytics-card" id="card-report">
+              <div class="panel-header-title"><i data-lucide="clipboard-list"></i><h3 data-i18n="reportTitle">דוח סיווג</h3></div>
+              <div id="report-table"></div>
+            </div>
+            <div class="panel analytics-card analytics-card-full" id="card-margin">
+              <div class="panel-header-title"><i data-lucide="activity"></i><h3 data-i18n="marginTitle">התפלגות שולי ההחלטה</h3></div>
+              <div class="chart-wrap chart-wrap-wide"><canvas id="margin-canvas"></canvas></div>
+            </div>
+          </div>
+        </section>
       </main>
     </div>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <script src="/static/app.js?v=6"></script>
+    <script src="/static/analytics.js?v=1"></script>
   </body>
 </html>

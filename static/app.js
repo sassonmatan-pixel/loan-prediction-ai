@@ -12,7 +12,14 @@ const TEXT = {
     atLeast: 'הערך חייב להיות לפחות', atMost: 'הערך יכול להיות לכל היותר', cannotComplete: 'לא ניתן להשלים את החיזוי', error: 'שגיאה', fixFields: 'יש לתקן את השדות המסומנים לפני הפעלת החיזוי.',
     calculating: 'מחשב חיזוי...', runPrediction: 'הפעלת חיזוי הלוואה', serverError: 'השרת החזיר שגיאה.', approvedTitle: 'ההלוואה צפויה להיות מאושרת', rejectedTitle: 'ההלוואה אינה צפויה להיות מאושרת',
     approved: 'מאושר', rejected: 'לא אושר', completed: 'החיזוי הושלם בהצלחה.', predictionResult: 'תוצאת החיזוי', approvalChance: 'סיכוי לאישור',
-    feature: { person_income: ['הכנסה שנתית', 'סך ההכנסה השנתית של מבקש ההלוואה.'], person_emp_exp: ['שנות ניסיון', 'מספר שנות הניסיון התעסוקתי.'], loan_amnt: ['סכום ההלוואה', 'הסכום המבוקש במסגרת ההלוואה.'], loan_int_rate: ['שיעור הריבית', 'שיעור הריבית השנתית על ההלוואה.'], loan_percent_income: ['יחס הלוואה להכנסה', 'היחס המחושב בין סכום ההלוואה להכנסה השנתית.'], credit_score: ['ציון אשראי', 'ציון המשקף את היסטוריית האשראי.'], previous_loan_defaults_on_file_Yes: ['פיגור בהלוואה קודמת', 'האם נרשם פיגור בתשלום הלוואה בעבר.'] }
+    feature: { person_income: ['הכנסה שנתית', 'סך ההכנסה השנתית של מבקש ההלוואה.'], person_emp_exp: ['שנות ניסיון', 'מספר שנות הניסיון התעסוקתי.'], loan_amnt: ['סכום ההלוואה', 'הסכום המבוקש במסגרת ההלוואה.'], loan_int_rate: ['שיעור הריבית', 'שיעור הריבית השנתית על ההלוואה.'], loan_percent_income: ['יחס הלוואה להכנסה', 'היחס המחושב בין סכום ההלוואה להכנסה השנתית.'], credit_score: ['ציון אשראי', 'ציון המשקף את היסטוריית האשראי.'], previous_loan_defaults_on_file_Yes: ['פיגור בהלוואה קודמת', 'האם נרשם פיגור בתשלום הלוואה בעבר.'] },
+    performanceAnalytics: 'ניתוח ביצועים', analyticsIntro: 'נתוני ביצועים אמיתיים שחושבו ישירות מהמודל השמור ומדאטה האימון.', analyticsLoading: 'טוען נתוני ביצועים מהמודל...', analyticsFailed: 'טעינת נתוני הביצועים נכשלה.',
+    modelDetailsTitle: 'פרטי המודל', boundaryTitle: 'גבול ההחלטה — הטלה דו-ממדית', endpointsTitle: 'נקודות קצה API', viewDocs: 'תיעוד API', modelFileTitle: 'קובץ המודל', confusionTitle: 'מטריצת בלבול', reportTitle: 'דוח סיווג', marginTitle: 'התפלגות שולי ההחלטה',
+    algorithm: 'אלגוריתם', kernelLabel: 'קרנל', regularization: 'רגולריזציה (C)', gammaLabel: 'Gamma', probabilityLabel: 'הסתברות', classWeightLabel: 'משקל מחלקות', decisionShapeLabel: 'צורת פונקציית החלטה', classesLabel: 'מחלקות', supportVectorsLabel: 'וקטורי תמיכה', featuresCountLabel: 'מספר תכונות',
+    filenameLabel: 'שם קובץ', fileSizeLabel: 'גודל קובץ', checksumLabel: 'טביעת SHA256', lastModifiedLabel: 'עודכן לאחרונה', datasetLabel: 'דאטהסט', trainSamplesLabel: 'שורות אימון', testSamplesLabel: 'שורות בדיקה',
+    boundarySubtitle: 'שני הרכיבים המרכזיים מסבירים יחד {pct}% מהשונות. הצבע והגבול מוצגים ישירות מפונקציית ההחלטה של המודל האמיתי — לא מודל דמה נפרד.',
+    classLabel: 'מחלקה', predictedLabel: 'חיזוי', actualLabel: 'בפועל', precisionLabel: 'Precision', recallLabel: 'Recall', f1Label: 'F1-Score', supportLabel: 'תמיכה', accuracyLabel: 'דיוק', macroAvgLabel: 'ממוצע Macro', weightedAvgLabel: 'ממוצע משוקלל',
+    rejectedClass: 'נדחה (0)', approvedClass: 'מאושר (1)', supportVectorLegend: 'וקטור תמיכה', marginXLabel: 'ערך פונקציית ההחלטה', marginYLabel: 'מספר בקשות', decisionLineLegend: 'קו ההחלטה (0)',
   },
   en: {
     pageTitle: 'Loan Prediction', brandName: 'Loan Prediction', modelLegend: 'Model Overview', loanPrediction: 'Loan Prediction', sidebarNote: 'The system uses a machine-learning model to estimate the likelihood of loan approval.',
@@ -27,7 +34,14 @@ const TEXT = {
     atLeast: 'Value must be at least', atMost: 'Value can be at most', cannotComplete: 'Unable to complete the prediction', error: 'Error', fixFields: 'Correct the marked fields before running the prediction.',
     calculating: 'Calculating prediction...', runPrediction: 'Run loan prediction', serverError: 'The server returned an error.', approvedTitle: 'The loan is expected to be approved', rejectedTitle: 'The loan is not expected to be approved',
     approved: 'Approved', rejected: 'Rejected', completed: 'Prediction completed successfully.', predictionResult: 'Prediction result', approvalChance: 'Approval chance',
-    feature: { person_income: ['Annual income', 'The applicant’s total annual income.'], person_emp_exp: ['Years of experience', 'Number of years of employment experience.'], loan_amnt: ['Loan amount', 'The amount requested in the loan application.'], loan_int_rate: ['Interest rate', 'The annual interest rate for the loan.'], loan_percent_income: ['Loan-to-income ratio', 'The calculated ratio of loan amount to annual income.'], credit_score: ['Credit score', 'A score reflecting the applicant’s credit history.'], previous_loan_defaults_on_file_Yes: ['Previous loan default', 'Whether there was a past loan-payment default.'] }
+    feature: { person_income: ['Annual income', 'The applicant’s total annual income.'], person_emp_exp: ['Years of experience', 'Number of years of employment experience.'], loan_amnt: ['Loan amount', 'The amount requested in the loan application.'], loan_int_rate: ['Interest rate', 'The annual interest rate for the loan.'], loan_percent_income: ['Loan-to-income ratio', 'The calculated ratio of loan amount to annual income.'], credit_score: ['Credit score', 'A score reflecting the applicant’s credit history.'], previous_loan_defaults_on_file_Yes: ['Previous loan default', 'Whether there was a past loan-payment default.'] },
+    performanceAnalytics: 'Performance Analytics', analyticsIntro: 'Real performance data computed directly from the saved model and its training data.', analyticsLoading: 'Loading model performance data...', analyticsFailed: 'Failed to load performance data.',
+    modelDetailsTitle: 'Model Details', boundaryTitle: 'Decision Boundary — 2D Projection', endpointsTitle: 'API Endpoints', viewDocs: 'API Documentation', modelFileTitle: 'Model File', confusionTitle: 'Confusion Matrix', reportTitle: 'Classification Report', marginTitle: 'Decision Margin Distribution',
+    algorithm: 'Algorithm', kernelLabel: 'Kernel', regularization: 'Regularization (C)', gammaLabel: 'Gamma', probabilityLabel: 'Probability', classWeightLabel: 'Class Weight', decisionShapeLabel: 'Decision Function Shape', classesLabel: 'Classes', supportVectorsLabel: 'Support Vectors', featuresCountLabel: 'Feature Count',
+    filenameLabel: 'Filename', fileSizeLabel: 'File Size', checksumLabel: 'SHA256 Checksum', lastModifiedLabel: 'Last Modified', datasetLabel: 'Dataset', trainSamplesLabel: 'Train Rows', testSamplesLabel: 'Test Rows',
+    boundarySubtitle: 'The two principal components together explain {pct}% of the variance. Color and boundary come directly from the real model’s decision function — not a separate toy model.',
+    classLabel: 'Class', predictedLabel: 'Predicted', actualLabel: 'Actual', precisionLabel: 'Precision', recallLabel: 'Recall', f1Label: 'F1-Score', supportLabel: 'Support', accuracyLabel: 'Accuracy', macroAvgLabel: 'Macro Avg', weightedAvgLabel: 'Weighted Avg',
+    rejectedClass: 'Rejected (0)', approvedClass: 'Approved (1)', supportVectorLegend: 'Support vector', marginXLabel: 'Decision function value', marginYLabel: 'Number of applications', decisionLineLegend: 'Decision boundary (0)',
   }
 };
 
@@ -51,7 +65,7 @@ const incomeInput = document.getElementById('person_income');
 const loanAmountInput = document.getElementById('loan_amnt');
 const loanIncomeRatioInput = document.getElementById('loan_percent_income');
 const navButtons = document.querySelectorAll('.nav-item');
-const views = { dashboard: document.getElementById('dashboard'), predictor: document.getElementById('predictor') };
+const views = { dashboard: document.getElementById('dashboard'), predictor: document.getElementById('predictor'), analytics: document.getElementById('analytics') };
 
 function refreshIcons() { if (window.lucide) window.lucide.createIcons(); }
 function setView(target) { navButtons.forEach((button) => button.classList.toggle('active', button.dataset.target === target)); Object.entries(views).forEach(([key, view]) => view.classList.toggle('active', key === target)); }

@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import hashlib
 import os
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import joblib
+import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -12,6 +15,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
+from sklearn.decomposition import PCA
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
@@ -280,6 +285,165 @@ def model_info() -> Dict[str, Any]:
         'model_type': MODEL_TYPE,
         'pipeline_status': 'פעיל' if model is not None else 'לא פעיל',
     }
+
+
+@lru_cache(maxsize=1)
+def compute_model_analytics() -> Dict[str, Any]:
+    """Real performance analytics computed from the saved model and its training data.
+
+    Cached for the process lifetime: this evaluates the RBF SVM over the full
+    dataset plus a PCA decision-surface mesh, which is too slow to redo per request.
+    """
+    from sklearn.model_selection import train_test_split
+
+    model = load_model()
+    scaler = model.named_steps['scaler']
+    svc = model.named_steps['model']
+
+    dataset = get_dataset()
+    if dataset is None:
+        raise FileNotFoundError('Dataset file is missing.')
+
+    prepared = preprocess_dataset(dataset)
+    X_df = prepared.drop(columns=['loan_status'])
+    y = prepared['loan_status'].values
+    X = X_df.values
+
+    preds = model.predict(X)
+    cm = confusion_matrix(y, preds).tolist()
+    report = classification_report(y, preds, output_dict=True, zero_division=0)
+
+    margins_full = svc.decision_function(scaler.transform(X))
+
+    # Recreate the exact split used by /api/retrain-model so svc.support_
+    # indices line up with a concrete set of rows we can plot and label.
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    Xs_train = scaler.transform(X_train)
+
+    pca = PCA(n_components=2, random_state=42)
+    X2_train = pca.fit_transform(Xs_train)
+
+    support_idx = set(int(i) for i in svc.support_)
+    rng = np.random.default_rng(42)
+    sample_idx = set(int(i) for i in rng.choice(len(X_train), size=min(220, len(X_train)), replace=False))
+    sv_idx = sorted(support_idx)[:80]
+    combined_idx = sorted(sample_idx | set(sv_idx))
+
+    points = [
+        {
+            'x': round(float(X2_train[i, 0]), 4),
+            'y': round(float(X2_train[i, 1]), 4),
+            'label': int(y_train[i]),
+            'is_support_vector': i in support_idx,
+        }
+        for i in combined_idx
+    ]
+
+    # Decision-boundary mesh: reconstruct grid points from PCA space back into
+    # scaled feature space and evaluate the REAL trained SVM on them (not a
+    # separately-fit 2D toy model), so the plot reflects actual model behavior.
+    x_min, x_max = X2_train[:, 0].min() - 1, X2_train[:, 0].max() + 1
+    y_min, y_max = X2_train[:, 1].min() - 1, X2_train[:, 1].max() + 1
+    resolution = 50
+    xx = np.linspace(x_min, x_max, resolution)
+    yy = np.linspace(y_min, y_max, resolution)
+    grid_pca = np.array([[gx, gy] for gy in yy for gx in xx])
+    grid_scaled = pca.inverse_transform(grid_pca)
+    z = svc.decision_function(grid_scaled).reshape(resolution, resolution)
+
+    margin_min, margin_max = float(margins_full.min()), float(margins_full.max())
+    counts, edges = np.histogram(margins_full, bins=24, range=(margin_min, margin_max))
+
+    with open(MODEL_PATH, 'rb') as f:
+        file_bytes = f.read()
+    modified = datetime.fromtimestamp(os.path.getmtime(MODEL_PATH), tz=timezone.utc)
+
+    def cls_row(label: int) -> Dict[str, Any]:
+        row = report.get(str(label), {})
+        return {
+            'label': label,
+            'precision': round(float(row.get('precision', 0)), 3),
+            'recall': round(float(row.get('recall', 0)), 3),
+            'f1': round(float(row.get('f1-score', 0)), 3),
+            'support': int(row.get('support', 0)),
+        }
+
+    def avg_row(key: str) -> Dict[str, Any]:
+        row = report[key]
+        return {
+            'precision': round(float(row['precision']), 3),
+            'recall': round(float(row['recall']), 3),
+            'f1': round(float(row['f1-score']), 3),
+            'support': int(row['support']),
+        }
+
+    return {
+        'model_details': {
+            'algorithm': 'SVC (Support Vector Classifier)',
+            'kernel': svc.kernel,
+            'C': svc.C,
+            'gamma': str(svc.gamma),
+            'probability': bool(svc.probability),
+            'class_weight': svc.class_weight,
+            'decision_function_shape': svc.decision_function_shape,
+            'classes': [int(c) for c in svc.classes_],
+            'n_support': [int(n) for n in svc.n_support_],
+            'n_features': int(svc.n_features_in_),
+        },
+        'model_file': {
+            'filename': os.path.basename(MODEL_PATH),
+            'size_kb': round(len(file_bytes) / 1024, 2),
+            'sha256': hashlib.sha256(file_bytes).hexdigest(),
+            'last_modified': modified.strftime('%Y-%m-%d'),
+        },
+        'dataset': {
+            'name': DATASET_NAME,
+            'num_samples': int(len(dataset)),
+            'train_samples': int(len(X_train)),
+            'test_samples': int(len(X_test)),
+        },
+        'confusion_matrix': {
+            'labels': [int(c) for c in svc.classes_],
+            'matrix': cm,
+        },
+        'classification_report': {
+            'classes': [cls_row(0), cls_row(1)],
+            'accuracy': round(float(report['accuracy']), 3),
+            'macro_avg': avg_row('macro avg'),
+            'weighted_avg': avg_row('weighted avg'),
+        },
+        'decision_boundary': {
+            'explained_variance': [round(float(v), 4) for v in pca.explained_variance_ratio_],
+            'grid': {
+                'x': [round(float(v), 4) for v in xx],
+                'y': [round(float(v), 4) for v in yy],
+                'z': [[round(float(v), 4) for v in row] for row in z],
+            },
+            'points': points,
+        },
+        'margin_distribution': {
+            'bin_edges': [round(float(v), 4) for v in edges],
+            'counts': [int(v) for v in counts],
+        },
+        'endpoints': [
+            {'method': 'GET', 'path': '/api/health', 'description': 'Service health check'},
+            {'method': 'GET', 'path': '/api/model-info', 'description': 'Model metadata and factor list'},
+            {'method': 'POST', 'path': '/api/predict', 'description': 'Run a loan approval prediction'},
+            {'method': 'GET', 'path': '/api/model-analytics', 'description': 'Full model performance analytics'},
+        ],
+    }
+
+
+@app.get('/api/model-analytics')
+def model_analytics() -> Dict[str, Any]:
+    try:
+        return compute_model_analytics()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail='Model or dataset file is missing.') from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f'Analytics computation failed: {exc}') from exc
 
 
 @app.post('/api/debug-features')
