@@ -8,7 +8,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css?v=7" />
+    <link rel="stylesheet" href="/static/styles.css?v=9" />
   </head>
   <body>
     <div class="page-shell">
@@ -33,6 +33,13 @@
           <div><p class="eyebrow muted" data-i18n="overview">תמונת מצב</p><h2 data-i18n="brandName">חיזוי הלוואות</h2></div>
           <div class="status-pill success" id="api-status"><i data-lucide="circle-check"></i><span data-i18n="active">מערכת פעילה</span></div>
         </header>
+        <div id="model-status-banner" class="model-status-banner hidden" role="alert">
+          <i data-lucide="loader-2" class="spinner"></i>
+          <div>
+            <p class="model-status-title" data-i18n="modelInitializingTitle">המערכת מאתחלת, נא להמתין</p>
+            <p class="model-status-desc" data-i18n="modelMissingDesc">קובץ המודל לא נמצא. יש לאמן את המודל ולשמור אותו לפני הרצת האפליקציה.</p>
+          </div>
+        </div>
         <section id="dashboard" class="view active">
           <div class="section-intro"><div class="section-intro-icon"><i data-lucide="sparkles"></i></div><div><h3 data-i18n="modelLegend">מקרא המודל</h3><p data-i18n="modelIntro">פרטי המודל והגורמים המשמשים לחיזוי אישור ההלוואה.</p></div></div>
           <div class="stats-grid" id="stats-grid"></div>
@@ -101,6 +108,11 @@
               <div class="panel-header-title"><i data-lucide="clipboard-list"></i><h3 data-i18n="reportTitle">דוח סיווג</h3></div>
               <div id="report-table"></div>
             </div>
+            <div class="panel analytics-card analytics-card-full" id="card-samples">
+              <div class="panel-header-title"><i data-lucide="table"></i><h3 data-i18n="samplesTitle">דגימות מהדאטהסט</h3></div>
+              <p class="panel-subtitle" data-i18n="samplesSubtitle">שורות אמיתיות מדאטה האימון, אחרי אותו עיבוד מקדים שהמודל רואה.</p>
+              <div id="samples-table"></div>
+            </div>
             <div class="panel analytics-card analytics-card-full" id="card-margin">
               <div class="panel-header-title"><i data-lucide="activity"></i><h3 data-i18n="marginTitle">התפלגות שולי ההחלטה</h3></div>
               <div class="chart-wrap chart-wrap-wide"><canvas id="margin-canvas"></canvas></div>
@@ -110,7 +122,7 @@
       </main>
     </div>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    <script src="/static/app.js?v=7"></script>
-    <script src="/static/analytics.js?v=2"></script>
+    <script src="/static/app.js?v=8"></script>
+    <script src="/static/analytics.js?v=4"></script>
   </body>
 </html>

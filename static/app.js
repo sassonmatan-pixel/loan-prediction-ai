@@ -20,6 +20,7 @@ const TEXT = {
     boundarySubtitle: 'שני הרכיבים המרכזיים מסבירים יחד {pct}% מהשונות. הצבע והגבול מוצגים ישירות מפונקציית ההחלטה של המודל האמיתי — לא מודל דמה נפרד.',
     classLabel: 'מחלקה', predictedLabel: 'חיזוי', actualLabel: 'בפועל', precisionLabel: 'Precision', recallLabel: 'Recall', f1Label: 'F1-Score', supportLabel: 'תמיכה', accuracyLabel: 'דיוק', macroAvgLabel: 'ממוצע Macro', weightedAvgLabel: 'ממוצע משוקלל',
     rejectedClass: 'נדחה (0)', approvedClass: 'מאושר (1)', supportVectorLegend: 'וקטור תמיכה', marginXLabel: 'ערך פונקציית ההחלטה', marginYLabel: 'מספר בקשות', decisionLineLegend: 'קו ההחלטה (0)',
+    modelInitializingTitle: 'המערכת מאתחלת, נא להמתין', modelMissingDesc: 'קובץ המודל לא נמצא. יש לאמן את המודל ולשמור אותו לפני הרצת האפליקציה.', samplesTitle: 'דגימות מהדאטהסט', samplesSubtitle: 'שורות אמיתיות מדאטה האימון, אחרי אותו עיבוד מקדים שהמודל רואה.',
   },
   en: {
     pageTitle: 'Loan Prediction', brandName: 'Loan Prediction', modelLegend: 'Model Overview', loanPrediction: 'Loan Prediction', sidebarNote: 'The system uses a machine-learning model to estimate the likelihood of loan approval.',
@@ -42,6 +43,7 @@ const TEXT = {
     boundarySubtitle: 'The two principal components together explain {pct}% of the variance. Color and boundary come directly from the real model’s decision function — not a separate toy model.',
     classLabel: 'Class', predictedLabel: 'Predicted', actualLabel: 'Actual', precisionLabel: 'Precision', recallLabel: 'Recall', f1Label: 'F1-Score', supportLabel: 'Support', accuracyLabel: 'Accuracy', macroAvgLabel: 'Macro Avg', weightedAvgLabel: 'Weighted Avg',
     rejectedClass: 'Rejected (0)', approvedClass: 'Approved (1)', supportVectorLegend: 'Support vector', marginXLabel: 'Decision function value', marginYLabel: 'Number of applications', decisionLineLegend: 'Decision boundary (0)',
+    modelInitializingTitle: 'The system is initializing, please wait', modelMissingDesc: 'The model file was not found. Please train the model and save it before running the app.', samplesTitle: 'Dataset Samples', samplesSubtitle: 'Real rows from the training data, after the same preprocessing the model sees.',
   }
 };
 
@@ -53,6 +55,7 @@ let features = Object.keys(ICONS);
 const t = (key) => TEXT[language][key] ?? key;
 
 const apiStatus = document.getElementById('api-status');
+const modelStatusBanner = document.getElementById('model-status-banner');
 const statsGrid = document.getElementById('stats-grid');
 const featuresList = document.getElementById('features-list');
 const form = document.getElementById('prediction-form');
@@ -97,10 +100,24 @@ function applyLanguage(nextLanguage) {
   renderStatCards(modelInfo); renderFeatures(features); setApiStatus('success', 'circle-check', t('active'));
 }
 
+function updateModelAvailability(pipelineStatus) {
+  const modelReady = pipelineStatus === 'Active' || pipelineStatus === 'פעיל';
+  modelStatusBanner.classList.toggle('hidden', modelReady);
+  submitBtn.disabled = !modelReady;
+  refreshIcons();
+}
+
 async function fetchModelInfo() {
   renderStatSkeleton(); renderFeatureSkeleton(); setApiStatus('loading', 'loader-2', t('calculating'));
-  try { const response = await fetch('/api/model-info'); if (!response.ok) throw new Error(); modelInfo = await response.json(); features = modelInfo.features || features; renderStatCards(modelInfo); renderFeatures(features); setApiStatus('success', 'circle-check', t('active')); }
-  catch (error) { console.error(error); renderStatCards({}); renderFeatures(features); setApiStatus('error', 'circle-alert', t('unavailable')); }
+  try {
+    const response = await fetch('/api/model-info'); if (!response.ok) throw new Error();
+    modelInfo = await response.json(); features = modelInfo.features || features;
+    renderStatCards(modelInfo); renderFeatures(features); setApiStatus('success', 'circle-check', t('active'));
+    updateModelAvailability(modelInfo.pipeline_status);
+  } catch (error) {
+    console.error(error); renderStatCards({}); renderFeatures(features); setApiStatus('error', 'circle-alert', t('unavailable'));
+    updateModelAvailability('Inactive');
+  }
 }
 function markInvalid(field, message) { field.classList.add('invalid'); let error = field.parentElement.querySelector('.field-error'); if (!error) { error = document.createElement('div'); error.className = 'field-error'; field.parentElement.appendChild(error); } error.textContent = message; }
 function clearInvalid(field) { field.classList.remove('invalid'); const error = field.parentElement.querySelector('.field-error'); if (error) error.textContent = ''; }

@@ -6,7 +6,7 @@ const analyticsLoadingEl = document.getElementById('analytics-loading');
 const analyticsErrorEl = document.getElementById('analytics-error');
 const analyticsContentEl = document.getElementById('analytics-content');
 
-const PALETTE = { approve: [13, 148, 136], reject: [192, 70, 58], axis: '#5b6b85', grid: 'rgba(15,35,64,0.18)' };
+const PALETTE = { approve: [34, 197, 94], reject: [239, 107, 90], axis: '#6b7280', grid: 'rgba(30,41,59,0.16)' };
 
 function detailRow(icon, label, value) {
   return `<div class="detail-row"><span class="detail-icon"><i data-lucide="${icon}"></i></span><span class="detail-label">${label}</span><span class="detail-value">${value}</span></div>`;
@@ -80,6 +80,17 @@ function renderReport(d) {
   html += `<tr class="row-summary"><td>${t('weightedAvgLabel')}</td><td>${r.weighted_avg.precision}</td><td>${r.weighted_avg.recall}</td><td>${r.weighted_avg.f1}</td><td>${r.weighted_avg.support}</td></tr>`;
   html += '</tbody></table></div>';
   document.getElementById('report-table').innerHTML = html;
+}
+
+function renderSamples(d) {
+  const s = d.dataset_samples;
+  if (!s || !s.rows.length) { document.getElementById('samples-table').innerHTML = ''; return; }
+  let html = `<div class="table-scroll"><table class="analytics-table"><thead><tr>${s.columns.map((c) => `<th>${c}</th>`).join('')}</tr></thead><tbody>`;
+  s.rows.forEach((row) => {
+    html += `<tr>${row.map((v) => `<td>${typeof v === 'boolean' ? (v ? 'True' : 'False') : v}</td>`).join('')}</tr>`;
+  });
+  html += '</tbody></table></div>';
+  document.getElementById('samples-table').innerHTML = html;
 }
 
 function setupCanvas(canvas, cssWidth, cssHeight) {
@@ -235,6 +246,7 @@ function renderAnalytics() {
   renderEndpoints(analyticsData);
   renderConfusion(analyticsData);
   renderReport(analyticsData);
+  renderSamples(analyticsData);
   renderBoundary(analyticsData);
   renderMargin(analyticsData);
   refreshIcons();

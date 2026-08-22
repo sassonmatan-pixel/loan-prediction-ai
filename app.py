@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import logging
 import os
 from datetime import datetime, timezone
 from functools import lru_cache
@@ -21,6 +22,8 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(name)s: %(message)s')
+logger = logging.getLogger('loan_forecast')
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(APP_ROOT, 'static')
@@ -39,82 +42,14 @@ app.add_middleware(
 
 @app.on_event('startup')
 async def startup_event():
-    """On app startup, verify model is working correctly. If not, retrain it."""
-    # Production startup must remain fast. Full-dataset model audits run offline.
-    print('[STARTUP] Loan prediction service is ready.', flush=True)
-    return
-    try:
-        # Load current model
-        current_model = load_model()
-        dataset = get_dataset()
-        
-        # Quick test - predict on full dataset
-        db2 = dataset.copy()
-        db2 = db2.drop(['person_age','person_gender','cb_person_cred_hist_length','person_education','loan_intent','person_home_ownership'], axis=1)
-        db2 = pd.get_dummies(db2, columns=['previous_loan_defaults_on_file'], drop_first=True)
-        
-        X = db2.drop('loan_status', axis=1).values
-        y = db2['loan_status'].values
-        
-        preds = current_model.predict(X)
-        approved_preds = (preds == 1).sum()
-        approved_actual = (y == 1).sum()
-        
-        print(f"[STARTUP] Model predictions: {approved_preds} approved, actual: {approved_actual} approved", flush=True)
-        
-        # If model is predicting < 5% approvals when it should predict ~10%, retrain
-        approve_rate = approved_preds / len(preds) if len(preds) > 0 else 0
-        actual_approve_rate = approved_actual / len(y) if len(y) > 0 else 0
-        
-        if approve_rate < 0.05 and actual_approve_rate > 0.08:
-            print("[STARTUP] WARNING: Model is under-approving. Retraining with class weight...", flush=True)
-            _retrain_with_class_weight(dataset)
-    except Exception as e:
-        print(f"[STARTUP] Error during model check: {e}", flush=True)
+    """Log service readiness on boot.
 
+    Deliberately does no model/dataset I/O here: startup must stay fast, and
+    scoring the SVM over the full training set is done on demand instead,
+    via /api/model-analytics (which caches its result for the process lifetime).
+    """
+    logger.info('Loan prediction service is ready.')
 
-def _retrain_with_class_weight(dataset: pd.DataFrame) -> None:
-    """Retrain model with class_weight='balanced' to handle imbalance"""
-    try:
-        from sklearn.model_selection import train_test_split, cross_val_score
-        from sklearn.pipeline import Pipeline
-        from sklearn.preprocessing import StandardScaler
-        
-        db2 = dataset.copy()
-        db2 = db2.drop(['person_age','person_gender','cb_person_cred_hist_length','person_education','loan_intent','person_home_ownership'], axis=1)
-        db2 = pd.get_dummies(db2, columns=['previous_loan_defaults_on_file'], drop_first=True)
-        
-        X = db2.drop('loan_status', axis=1).values
-        y = db2['loan_status'].values
-        
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
-        
-        best_score = 0
-        best_C = None
-        best_pipeline = None
-        
-        C_range = [0.1, 1, 10]
-        for c_val in C_range:
-            pipeline = Pipeline([
-                ('scaler', StandardScaler()),
-                ('model', SVC(kernel='rbf', C=c_val, class_weight='balanced'))  # KEY: class_weight='balanced'
-            ])
-            
-            scores = cross_val_score(pipeline, X_train, y_train, cv=5, scoring='accuracy')
-            mean_score = scores.mean()
-            
-            if mean_score > best_score:
-                best_score = mean_score
-                best_C = c_val
-                best_pipeline = pipeline
-        
-        best_pipeline.fit(X_train, y_train)
-        test_acc = best_pipeline.score(X_test, y_test)
-        
-        joblib.dump(best_pipeline, MODEL_PATH)
-        print(f"[RETRAIN] Model retrained with class_weight='balanced'. Test accuracy: {test_acc:.4f}", flush=True)
-    except Exception as e:
-        print(f"[RETRAIN] Failed: {e}", flush=True)
 
 FEATURE_COLUMNS: List[str] = [
     'person_income',
@@ -134,6 +69,8 @@ MODEL_SAMPLE_COUNT = 12000
 
 
 class LoanPredictionInput(BaseModel):
+    """Request payload for /api/predict — the 7 features the saved model expects."""
+
     person_income: float = Field(..., gt=0)
     person_emp_exp: int = Field(..., ge=0)
     loan_amnt: float = Field(..., gt=0)
@@ -145,6 +82,7 @@ class LoanPredictionInput(BaseModel):
     @field_validator('previous_loan_defaults_on_file')
     @classmethod
     def validate_default_flag(cls, value: str) -> str:
+        """Normalize the default-history flag to lowercase 'yes'/'no'."""
         normalized = str(value).strip().lower()
         if normalized not in {'yes', 'no'}:
             raise ValueError("previous_loan_defaults_on_file must be either 'Yes' or 'No'.")
@@ -152,6 +90,7 @@ class LoanPredictionInput(BaseModel):
 
     @property
     def normalized_payload(self) -> Dict[str, Any]:
+        """This input as a plain dict with consistent types, ready for build_model_frame()."""
         return {
             'person_income': float(self.person_income),
             'person_emp_exp': int(self.person_emp_exp),
@@ -165,6 +104,7 @@ class LoanPredictionInput(BaseModel):
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    """Return a 400 with the validation error details, instead of FastAPI's default 422."""
     return JSONResponse(
         status_code=400,
         content={
@@ -176,18 +116,21 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @lru_cache(maxsize=1)
 def load_model() -> Any:
+    """Load and cache the trained Pipeline (StandardScaler + SVC) from MODEL_PATH."""
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(f'Model file not found at {MODEL_PATH}')
     return joblib.load(MODEL_PATH)
 
 
 def get_dataset() -> Optional[pd.DataFrame]:
+    """Load the training dataset, or None if DATASET_PATH doesn't exist."""
     if not os.path.exists(DATASET_PATH):
         return None
     return pd.read_csv(DATASET_PATH)
 
 
 def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
+    """Apply the same column drop + one-hot encoding used at training time."""
     prepared = df.copy()
     prepared = prepared.drop(
         columns=[
@@ -205,6 +148,11 @@ def preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_model_frame(payload: Dict[str, Any]) -> pd.DataFrame:
+    """Turn a normalized prediction payload into a single-row DataFrame
+
+    matching FEATURE_COLUMNS exactly (name, order, and one-hot encoding),
+    so it can be passed straight into the saved Pipeline.
+    """
     # Create row with exact feature names and order
     row = {
         'person_income': float(payload['person_income']),
@@ -228,21 +176,21 @@ def build_model_frame(payload: Dict[str, Any]) -> pd.DataFrame:
     
     # Return features in EXACT same order as training
     result = df[FEATURE_COLUMNS]
-    
-    # DEBUG: Log the transformation
-    import sys
-    print(f"DEBUG build_model_frame:", file=sys.stderr)
-    print(f"  Input: {payload}", file=sys.stderr)
-    print(f"  After OHE columns: {list(df.columns)}", file=sys.stderr)
-    print(f"  Final vector: {result.values[0]}", file=sys.stderr)
-    
+
+    logger.debug('build_model_frame: input=%s columns_after_ohe=%s vector=%s',
+                 payload, list(df.columns), result.values[0])
+
     return result
 
 
 @app.get('/api/model-info')
 def model_info() -> Dict[str, Any]:
-    # Keep dashboard loading instant: scoring an RBF SVM over every training
-    # row on each page visit can take a long time.
+    """Model metadata for the dashboard: features, accuracy, and whether a model file is present.
+
+    Reports fixed accuracy/sample-count constants rather than scoring the
+    model live, so the dashboard loads instantly — scoring an RBF SVM over
+    every training row on each page visit would be far too slow for that.
+    """
     model_available = os.path.exists(MODEL_PATH)
     return {
         'model_name': 'Loan approval prediction model',
@@ -253,37 +201,6 @@ def model_info() -> Dict[str, Any]:
         'dataset_name': DATASET_NAME if os.path.exists(DATASET_PATH) else None,
         'model_type': MODEL_TYPE,
         'pipeline_status': 'Active' if model_available else 'Inactive',
-    }
-
-    dataset = get_dataset()
-    sample_count = int(len(dataset)) if dataset is not None else None
-    model = None
-    accuracy: Optional[float] = None
-
-    try:
-        model = load_model()
-    except Exception:
-        model = None
-
-    if model is not None and dataset is not None:
-        try:
-            prepared = preprocess_dataset(dataset)
-            if 'loan_status' in prepared.columns:
-                X = prepared.drop(columns=['loan_status'])
-                y = prepared['loan_status']
-                accuracy = float(model.score(X, y))
-        except Exception:
-            accuracy = None
-
-    return {
-        'model_name': 'מודל לחיזוי אישור הלוואות',
-        'features': FEATURE_COLUMNS,
-        'num_features': len(FEATURE_COLUMNS),
-        'accuracy': accuracy,
-        'num_samples': sample_count,
-        'dataset_name': DATASET_NAME if os.path.exists(DATASET_PATH) else None,
-        'model_type': MODEL_TYPE,
-        'pipeline_status': 'פעיל' if model is not None else 'לא פעיל',
     }
 
 
@@ -356,6 +273,16 @@ def compute_model_analytics() -> Dict[str, Any]:
     margin_min, margin_max = float(margins_full.min()), float(margins_full.max())
     counts, edges = np.histogram(margins_full, bins=24, range=(margin_min, margin_max))
 
+    sample_rows = prepared.head(8).copy()
+    dataset_samples = {
+        'columns': list(sample_rows.columns),
+        'rows': [
+            [(bool(v) if isinstance(v, (bool, np.bool_)) else (int(v) if float(v).is_integer() else round(float(v), 4)))
+             for v in row]
+            for row in sample_rows.values
+        ],
+    }
+
     with open(MODEL_PATH, 'rb') as f:
         file_bytes = f.read()
     modified = datetime.fromtimestamp(os.path.getmtime(MODEL_PATH), tz=timezone.utc)
@@ -427,6 +354,7 @@ def compute_model_analytics() -> Dict[str, Any]:
             'bin_edges': [round(float(v), 4) for v in edges],
             'counts': [int(v) for v in counts],
         },
+        'dataset_samples': dataset_samples,
         'endpoints': [
             {'method': 'GET', 'path': '/api/health', 'description': 'Service health check'},
             {'method': 'GET', 'path': '/api/model-info', 'description': 'Model metadata and factor list'},
@@ -438,6 +366,7 @@ def compute_model_analytics() -> Dict[str, Any]:
 
 @app.get('/api/model-analytics')
 def model_analytics() -> Dict[str, Any]:
+    """Full model performance analytics: see compute_model_analytics() for the payload shape."""
     try:
         return compute_model_analytics()
     except FileNotFoundError as exc:
@@ -446,64 +375,9 @@ def model_analytics() -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail=f'Analytics computation failed: {exc}') from exc
 
 
-@app.post('/api/debug-features')
-def debug_features(payload: LoanPredictionInput) -> Dict[str, Any]:
-    """Debug endpoint - shows exactly how features are processed"""
-    feature_frame = build_model_frame(payload.normalized_payload)
-    return {
-        'feature_columns': FEATURE_COLUMNS,
-        'feature_vector': feature_frame.values[0].tolist(),
-        'feature_dataframe': feature_frame.to_dict(orient='records')[0],
-    }
-
-
-@app.post('/api/model-full-audit')
-def model_full_audit() -> Dict[str, Any]:
-    """Complete model audit - compares saved model vs expected features"""
-    try:
-        model = load_model()
-        dataset = get_dataset()
-        
-        # Get feature names from saved model
-        svc = model.named_steps['model']
-        model_n_features = svc.n_features_in_
-        
-        # Preprocess dataset same as training
-        db2 = dataset.copy()
-        db2 = db2.drop(['person_age','person_gender','cb_person_cred_hist_length','person_education','loan_intent','person_home_ownership'], axis=1)
-        db2 = pd.get_dummies(db2, columns=['previous_loan_defaults_on_file'], drop_first=True)
-        
-        actual_features = list(db2.drop('loan_status', axis=1).columns)
-        X = db2.drop('loan_status', axis=1).values
-        y = db2['loan_status'].values
-        
-        # Test predictions
-        preds = model.predict(X)
-        accuracy = (preds == y).mean()
-        
-        # Find misclassifications
-        false_approvals = ((preds == 1) & (y == 0)).sum()
-        false_rejections = ((preds == 0) & (y == 1)).sum()
-        
-        return {
-            'model_n_features_in': model_n_features,
-            'expected_features': FEATURE_COLUMNS,
-            'actual_features_from_dataset': actual_features,
-            'features_match': model_n_features == len(FEATURE_COLUMNS),
-            'dataset_accuracy': float(accuracy),
-            'false_approvals': int(false_approvals),
-            'false_rejections': int(false_rejections),
-            'approved_count': int((preds == 1).sum()),
-            'rejected_count': int((preds == 0).sum()),
-            'actual_approved': int((y == 1).sum()),
-            'actual_rejected': int((y == 0).sum()),
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f'Audit failed: {str(e)}')
-
-
 @app.post('/api/predict')
 def predict(payload: LoanPredictionInput) -> Dict[str, Any]:
+    """Run the saved Pipeline on one application and return the approval decision."""
     try:
         model = load_model()
     except FileNotFoundError as exc:
@@ -512,18 +386,12 @@ def predict(payload: LoanPredictionInput) -> Dict[str, Any]:
         raise HTTPException(status_code=500, detail='Unable to load model.') from exc
 
     feature_frame = build_model_frame(payload.normalized_payload)
-    
-    # DEBUG: Log feature vector
-    import sys
-    feature_vector = feature_frame.values[0]
-    print(f"DEBUG: Feature columns: {FEATURE_COLUMNS}", file=sys.stderr)
-    print(f"DEBUG: Feature vector: {feature_vector}", file=sys.stderr)
-    print(f"DEBUG: Input payload: {payload.normalized_payload}", file=sys.stderr)
+    logger.debug('predict: payload=%s vector=%s', payload.normalized_payload, feature_frame.values[0])
 
     try:
         prediction = int(model.predict(feature_frame)[0])
-        print(f"DEBUG: Model prediction: {prediction}", file=sys.stderr)
-        
+        logger.info('predict: prediction=%s', prediction)
+
         approved = prediction == 1
         response: Dict[str, Any] = {
             'prediction': prediction,
@@ -541,18 +409,24 @@ def predict(payload: LoanPredictionInput) -> Dict[str, Any]:
 
 @app.get('/api/health')
 def health() -> Dict[str, str]:
+    """Liveness check used by uptime monitors and the deploy platform."""
     return {'status': 'ok'}
 
 
 @app.post('/api/retrain-model')
 def retrain_model() -> Dict[str, Any]:
-    """EMERGENCY: Retrain model from scratch using original notebook code"""
+    """Retrain the Pipeline from scratch on DATASET_PATH and overwrite MODEL_PATH.
+
+    Mirrors the training notebook exactly: StandardScaler + SVC(kernel='rbf')
+    in one Pipeline, with a small grid search over C via 5-fold CV, then a
+    held-out test-set evaluation. This is the real retraining mechanism used
+    whenever the training dataset changes (e.g. loan_data_v2.csv).
+    """
     try:
         from sklearn.model_selection import cross_val_score
         from sklearn.preprocessing import StandardScaler as ScalerClass
         from sklearn.pipeline import Pipeline as PipelineClass
-        from sklearn.metrics import accuracy_score
-        
+
         # Load and preprocess data
         dataset = pd.read_csv(DATASET_PATH)
         db2 = dataset.copy()
@@ -592,7 +466,12 @@ def retrain_model() -> Dict[str, Any]:
         
         # Save
         joblib.dump(best_pipeline, MODEL_PATH)
-        
+        load_model.cache_clear()
+
+        logger.info('retrain_model: best_C=%s cv_accuracy=%.4f test_accuracy=%.4f full_accuracy=%.4f',
+                    best_C, best_score, test_acc, full_acc)
+        compute_model_analytics.cache_clear()
+
         return {
             'status': 'success',
             'best_C': best_C,
@@ -602,12 +481,13 @@ def retrain_model() -> Dict[str, Any]:
             'message': 'Model retrained and saved successfully'
         }
     except Exception as e:
+        logger.warning('retrain_model failed: %s', e)
         raise HTTPException(status_code=500, detail=f'Retraining failed: {str(e)}')
-
 
 
 @app.get('/')
 def root() -> FileResponse:
+    """Serve the single-page app shell; static/app.js handles client-side routing."""
     return FileResponse(os.path.join(STATIC_DIR, 'index.html'))
 
 
