@@ -20,7 +20,7 @@ from sklearn.preprocessing import StandardScaler
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(APP_ROOT, 'static')
 MODEL_PATH = os.path.join(APP_ROOT, 'loan_model.pkl')
-DATASET_PATH = os.path.join(APP_ROOT, 'loan_data.csv')
+DATASET_PATH = os.path.join(APP_ROOT, 'loan_data_v2.csv')
 
 app = FastAPI(title='Loan Forecast API', version='1.0.0')
 app.add_middleware(
@@ -124,8 +124,8 @@ FEATURE_COLUMNS: List[str] = [
 MODEL_NAME = os.path.basename(MODEL_PATH)
 DATASET_NAME = os.path.basename(DATASET_PATH)
 MODEL_TYPE = 'SVM'
-MODEL_ACCURACY = 0.905
-MODEL_SAMPLE_COUNT = 45000
+MODEL_ACCURACY = 0.857
+MODEL_SAMPLE_COUNT = 12000
 
 
 class LoanPredictionInput(BaseModel):
