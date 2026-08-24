@@ -39,4 +39,7 @@ python app.py
 | GET | `/api/model-analytics` | מטריקות ביצועים מלאות (מטריצת בלבול, דוח סיווג, גבול החלטה, דגימות דאטה) |
 | POST | `/api/retrain-model` | אימון מחדש של ה-Pipeline מ-`loan_data_v2.csv` ושמירתו |
 
+
+## קישור לאתר המודל 
+https://loan-prediction-ai-2n42.onrender.com/
 תיעוד אינטראקטיבי מלא זמין ב-`/docs`.
