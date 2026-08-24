@@ -41,5 +41,4 @@ python app.py
 
 
 ## קישור לאתר המודל 
-https://loan-prediction-ai-2n42.onrender.com/
-תיעוד אינטראקטיבי מלא זמין ב-`/docs`.
+אתר המודל - https://loan-prediction-ai-2n42.onrender.com/
